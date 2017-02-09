@@ -45,9 +45,9 @@ class SystemSSHClient implements SshClient {
 
         File fullSrc = new File(dataFile, remoteFileName);
 
-        save(data, fullSrc, 0600); //need to be able to remove these files
+        save(data, fullSrc, mode); //need to be able to remove these files
 
-        String sshClientLaunchString = String.format("scp -o StrictHostKeyChecking=no -i %s -P %d %s %s@%s:%s",
+        String sshClientLaunchString = String.format("scp -o StrictHostKeyChecking=no -p -i %s -P %d %s %s@%s:%s",
                 privateKeyFile.getAbsolutePath(), port,
                 fullSrc.getAbsolutePath(),
                 user, host, remoteTargetDirectory);
@@ -110,21 +110,21 @@ class SystemSSHClient implements SshClient {
         if (privateKeyFile != null) privateKeyFile.delete();
     }
 
-    private void save(byte[] data, File tempFile, int permissionMask) throws IOException, InterruptedException {
+    private void save(byte[] data, File tempFile, String mode) throws IOException, InterruptedException {
         try(FileOutputStream fos = new FileOutputStream(tempFile)) {
             fos.write(data);
             fos.flush();
         }
 
         FilePath filePath = new FilePath(tempFile);
-        filePath.chmod(permissionMask);
+        filePath.chmod(Integer.parseInt(mode, 8));
     }
 
     private File createIdentityKeyFile(char[] privateKey) throws IOException, InterruptedException {
         File tempFile = File.createTempFile("ec2_", ".pem");
 
         try {
-            save(new String(privateKey).getBytes(StandardCharsets.UTF_8), tempFile, 0400); // octal file mask - readonly by owner
+            save(new String(privateKey).getBytes(StandardCharsets.UTF_8), tempFile, "0400"); // octal file mask - readonly by owner
         } catch (Exception e) {
             tempFile.delete();
             throw new IOException("[native ssh] Error creating temporary identity key file.", e);
