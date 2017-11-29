@@ -181,6 +181,8 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
 
     public final boolean connectUsingPublicIp;
 
+    public final String maxTotalUses;
+
     private boolean node = true;
 
     private transient/* almost final */Set<LabelAtom> labelSet;
@@ -206,7 +208,7 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
             boolean stopOnTerminate, String subnetId, List<EC2Tag> tags, String idleTerminationMinutes,
             boolean usePrivateDnsName, String instanceCapStr, String iamInstanceProfile, boolean deleteRootOnTermination,
             boolean useEphemeralDevices, boolean useDedicatedTenancy, String launchTimeoutStr, boolean associatePublicIp,
-            String customDeviceMapping, boolean connectBySSHProcess, boolean connectUsingPublicIp) {
+            String customDeviceMapping, boolean connectBySSHProcess, boolean connectUsingPublicIp, String maxTotalUses) {
 
         if(StringUtils.isNotBlank(remoteAdmin) || StringUtils.isNotBlank(jvmopts) || StringUtils.isNotBlank(tmpDir)){
             LOGGER.log(Level.FINE, "As remoteAdmin, jvmopts or tmpDir is not blank, we must ensure the user has RUN_SCRIPTS rights.");
@@ -242,6 +244,7 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
         this.connectUsingPublicIp = connectUsingPublicIp;
         this.useDedicatedTenancy = useDedicatedTenancy;
         this.connectBySSHProcess = connectBySSHProcess;
+        this.maxTotalUses = maxTotalUses;
 
         if (null == instanceCapStr || instanceCapStr.isEmpty()) {
             this.instanceCap = Integer.MAX_VALUE;
@@ -261,6 +264,20 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
         this.customDeviceMapping = customDeviceMapping;
 
         readResolve(); // initialize
+    }
+
+    public SlaveTemplate(String ami, String zone, SpotConfiguration spotConfig, String securityGroups, String remoteFS,
+    		InstanceType type, boolean ebsOptimized, String labelString, Node.Mode mode, String description, String initScript,
+    		String tmpDir, String userData, String numExecutors, String remoteAdmin, AMITypeData amiType, String jvmopts,
+    		boolean stopOnTerminate, String subnetId, List<EC2Tag> tags, String idleTerminationMinutes,
+    		boolean usePrivateDnsName, String instanceCapStr, String iamInstanceProfile, boolean deleteRootOnTermination,
+    		boolean useEphemeralDevices, boolean useDedicatedTenancy, String launchTimeoutStr, boolean associatePublicIp,
+    		String customDeviceMapping, boolean connectBySSHProcess, boolean connectUsingPublicIp) {
+    		        this(ami, zone, spotConfig, securityGroups, remoteFS, type, ebsOptimized, labelString, mode, description, initScript,
+    		                tmpDir, userData, numExecutors, remoteAdmin, amiType, jvmopts, stopOnTerminate, subnetId, tags,
+    		                idleTerminationMinutes, usePrivateDnsName, instanceCapStr, iamInstanceProfile, deleteRootOnTermination,
+    		                useEphemeralDevices, useDedicatedTenancy, launchTimeoutStr, associatePublicIp, customDeviceMapping,
+    		                connectBySSHProcess, connectUsingPublicIp, "-1");
     }
 
     public SlaveTemplate(String amiName, String zone, SpotConfiguration spotConfig, String securityGroups, String remoteFS,
@@ -450,6 +467,10 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
 
     public String getIamInstanceProfile() {
         return iamInstanceProfile;
+    }
+
+    public String getMaxTotalUses() {
+    	return maxTotalUses;
     }
 
     public void setNode(Boolean node) {
@@ -984,13 +1005,13 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
         return new EC2OndemandSlave(inst.getInstanceId(), description, remoteFS, getNumExecutors(), labels, mode, expandInitScript(),
                 tmpDir, remoteAdmin, jvmopts, stopOnTerminate, idleTerminationMinutes, inst.getPublicDnsName(),
                 inst.getPrivateDnsName(), EC2Tag.fromAmazonTags(inst.getTags()), parent.name, usePrivateDnsName,
-                useDedicatedTenancy, getLaunchTimeout(), amiType);
+                useDedicatedTenancy, getLaunchTimeout(), amiType, maxTotalUses);
     }
 
     protected EC2SpotSlave newSpotSlave(SpotInstanceRequest sir, String name) throws FormException, IOException {
         return new EC2SpotSlave(name, sir.getSpotInstanceRequestId(), description, remoteFS, getNumExecutors(), mode, expandInitScript(),
                 tmpDir, labels, remoteAdmin, jvmopts, idleTerminationMinutes, EC2Tag.fromAmazonTags(sir.getTags()), parent.name,
-                usePrivateDnsName, getLaunchTimeout(), amiType);
+                usePrivateDnsName, getLaunchTimeout(), amiType, maxTotalUses);
     }
 
     private String expandInitScript() {
@@ -1260,6 +1281,16 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
                 }
             } else
                 return FormValidation.ok(); // can't test
+        }
+
+        public FormValidation doCheckMaxTotalUses(@QueryParameter String value) {
+        	try {
+        		int val = Integer.parseInt(value);
+        		if (val == -1 || val > 0)
+        			return FormValidation.ok();
+        	} catch (NumberFormatException nfe) {
+        	}
+        	return FormValidation.error("Maximum Total Uses must be greater or equal to -1");
         }
 
         public FormValidation doCheckLabelString(@QueryParameter String value, @QueryParameter Node.Mode mode) {
