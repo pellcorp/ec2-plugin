@@ -77,7 +77,7 @@ public class SlaveTemplateTest {
 
         r.submit(r.createWebClient().goTo("configure").getFormByName("config"));
         SlaveTemplate received = ((EC2Cloud) r.jenkins.clouds.iterator().next()).getTemplate(description);
-        r.assertEqualBeans(orig, received, "ami,zone,description,remoteFS,type,jvmopts,stopOnTerminate,securityGroups,subnetId,usePrivateDnsName,useEphemeralDevices,useDedicatedTenancy");
+        r.assertEqualBeans(orig, received, "amiName,zone,description,remoteFS,type,jvmopts,stopOnTerminate,securityGroups,subnetId,usePrivateDnsName,useEphemeralDevices,useDedicatedTenancy");
     }
 
     @Test
@@ -101,7 +101,7 @@ public class SlaveTemplateTest {
 
         r.submit(r.createWebClient().goTo("configure").getFormByName("config"));
         SlaveTemplate received = ((EC2Cloud) r.jenkins.clouds.iterator().next()).getTemplate(description);
-        r.assertEqualBeans(orig, received, "ami,zone,description,remoteFS,type,jvmopts,stopOnTerminate,securityGroups,subnetId,tags,usePrivateDnsName");
+        r.assertEqualBeans(orig, received, "amiName,zone,description,remoteFS,type,jvmopts,stopOnTerminate,securityGroups,subnetId,tags,usePrivateDnsName");
     }
 
     /**
@@ -133,7 +133,7 @@ public class SlaveTemplateTest {
 
         r.submit(r.createWebClient().goTo("configure").getFormByName("config"));
         SlaveTemplate received = ((EC2Cloud) r.jenkins.clouds.iterator().next()).getTemplate(description);
-        r.assertEqualBeans(orig, received, "ami,zone,spotConfig,description,remoteFS,type,jvmopts,stopOnTerminate,securityGroups,subnetId,tags,usePrivateDnsName");
+        r.assertEqualBeans(orig, received, "amiName,zone,spotConfig,description,remoteFS,type,jvmopts,stopOnTerminate,securityGroups,subnetId,tags,usePrivateDnsName");
     }
 
     /**
@@ -162,7 +162,7 @@ public class SlaveTemplateTest {
 
         r.submit(r.createWebClient().goTo("configure").getFormByName("config"));
         SlaveTemplate received = ((EC2Cloud) r.jenkins.clouds.iterator().next()).getTemplate(description);
-        r.assertEqualBeans(orig, received, "ami,zone,description,remoteFS,type,jvmopts,stopOnTerminate,securityGroups,subnetId,usePrivateDnsName,iamInstanceProfile");
+        r.assertEqualBeans(orig, received, "amiName,zone,description,remoteFS,type,jvmopts,stopOnTerminate,securityGroups,subnetId,usePrivateDnsName,iamInstanceProfile");
     }
 
     @Test
@@ -174,11 +174,11 @@ public class SlaveTemplateTest {
     @Test
     public void testUpdateAmi() {
         SlaveTemplate st = new SlaveTemplate("ami1", EC2AbstractSlave.TEST_ZONE, null, "default", "foo", InstanceType.M1Large, false, "ttt", Node.Mode.NORMAL, "", "bar", "bbb", "aaa", "10", "fff", null, "-Xmx1g", false, "subnet 456", null, null, false, null, "iamInstanceProfile", false, false, "0", false, "");
-        assertEquals("ami1", st.getAmi());
-        st.setAmi("ami2");
-        assertEquals("ami2", st.getAmi());
-        st.ami = "ami3";
-        assertEquals("ami3", st.getAmi());
+        assertEquals("ami1", st.getAmiName());
+        st.setAmiName("ami2");
+        assertEquals("ami2", st.getAmiName());
+        st.setAmiName("ami3");
+        assertEquals("ami3", st.getAmiName());
     }
 
     @Test
