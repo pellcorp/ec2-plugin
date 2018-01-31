@@ -60,7 +60,7 @@ import hudson.util.ListBoxModel;
 public class SlaveTemplate implements Describable<SlaveTemplate> {
     private static final Logger LOGGER = Logger.getLogger(SlaveTemplate.class.getName());
 
-    public String ami;
+    public String amiName;
 
     public final String description;
 
@@ -138,14 +138,14 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
     public transient String rootCommandPrefix;
 
     @DataBoundConstructor
-    public SlaveTemplate(String ami, String zone, SpotConfiguration spotConfig, String securityGroups, String remoteFS,
+    public SlaveTemplate(String amiName, String zone, SpotConfiguration spotConfig, String securityGroups, String remoteFS,
             InstanceType type, boolean ebsOptimized, String labelString, Node.Mode mode, String description, String initScript,
             String tmpDir, String userData, String numExecutors, String remoteAdmin, AMITypeData amiType, String jvmopts,
             boolean stopOnTerminate, String subnetId, List<EC2Tag> tags, String idleTerminationMinutes,
             boolean usePrivateDnsName, String instanceCapStr, String iamInstanceProfile, boolean useEphemeralDevices,
             boolean useDedicatedTenancy, String launchTimeoutStr, boolean associatePublicIp, String customDeviceMapping,
             boolean connectBySSHProcess, boolean connectUsingPublicIp) {
-        this.ami = ami;
+        this.amiName = amiName;
         this.zone = zone;
         this.spotConfig = spotConfig;
         this.securityGroups = securityGroups;
@@ -191,26 +191,26 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
         readResolve(); // initialize
     }
 
-    public SlaveTemplate(String ami, String zone, SpotConfiguration spotConfig, String securityGroups, String remoteFS,
+    public SlaveTemplate(String amiName, String zone, SpotConfiguration spotConfig, String securityGroups, String remoteFS,
             InstanceType type, boolean ebsOptimized, String labelString, Node.Mode mode, String description, String initScript,
             String tmpDir, String userData, String numExecutors, String remoteAdmin, AMITypeData amiType, String jvmopts,
             boolean stopOnTerminate, String subnetId, List<EC2Tag> tags, String idleTerminationMinutes,
             boolean usePrivateDnsName, String instanceCapStr, String iamInstanceProfile, boolean useEphemeralDevices,
             boolean useDedicatedTenancy, String launchTimeoutStr, boolean associatePublicIp, String customDeviceMapping,
             boolean connectBySSHProcess) {
-        this(ami, zone, spotConfig, securityGroups, remoteFS, type, ebsOptimized, labelString, mode, description, initScript,
+        this(amiName, zone, spotConfig, securityGroups, remoteFS, type, ebsOptimized, labelString, mode, description, initScript,
                 tmpDir, userData, numExecutors, remoteAdmin, amiType, jvmopts, stopOnTerminate, subnetId, tags,
                 idleTerminationMinutes, usePrivateDnsName, instanceCapStr, iamInstanceProfile, useEphemeralDevices,
                 useDedicatedTenancy, launchTimeoutStr, associatePublicIp, customDeviceMapping, connectBySSHProcess, false);
     }
 
-    public SlaveTemplate(String ami, String zone, SpotConfiguration spotConfig, String securityGroups, String remoteFS,
+    public SlaveTemplate(String amiName, String zone, SpotConfiguration spotConfig, String securityGroups, String remoteFS,
             InstanceType type, boolean ebsOptimized, String labelString, Node.Mode mode, String description, String initScript,
             String tmpDir, String userData, String numExecutors, String remoteAdmin, AMITypeData amiType, String jvmopts,
             boolean stopOnTerminate, String subnetId, List<EC2Tag> tags, String idleTerminationMinutes,
             boolean usePrivateDnsName, String instanceCapStr, String iamInstanceProfile, boolean useEphemeralDevices,
             boolean useDedicatedTenancy, String launchTimeoutStr, boolean associatePublicIp, String customDeviceMapping) {
-        this(ami, zone, spotConfig, securityGroups, remoteFS, type, ebsOptimized, labelString, mode, description, initScript,
+        this(amiName, zone, spotConfig, securityGroups, remoteFS, type, ebsOptimized, labelString, mode, description, initScript,
                 tmpDir, userData, numExecutors, remoteAdmin, amiType, jvmopts, stopOnTerminate, subnetId, tags,
                 idleTerminationMinutes, usePrivateDnsName, instanceCapStr, iamInstanceProfile, useEphemeralDevices,
                 useDedicatedTenancy, launchTimeoutStr, associatePublicIp, customDeviceMapping, false);
@@ -219,13 +219,13 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
     /**
      * Backward compatible constructor for reloading previous version data
      */
-    public SlaveTemplate(String ami, String zone, SpotConfiguration spotConfig, String securityGroups, String remoteFS,
+    public SlaveTemplate(String amiName, String zone, SpotConfiguration spotConfig, String securityGroups, String remoteFS,
             String sshPort, InstanceType type, boolean ebsOptimized, String labelString, Node.Mode mode, String description,
             String initScript, String tmpDir, String userData, String numExecutors, String remoteAdmin, String rootCommandPrefix,
             String jvmopts, boolean stopOnTerminate, String subnetId, List<EC2Tag> tags, String idleTerminationMinutes,
             boolean usePrivateDnsName, String instanceCapStr, String iamInstanceProfile, boolean useEphemeralDevices,
             String launchTimeoutStr) {
-        this(ami, zone, spotConfig, securityGroups, remoteFS, type, ebsOptimized, labelString, mode, description, initScript,
+        this(amiName, zone, spotConfig, securityGroups, remoteFS, type, ebsOptimized, labelString, mode, description, initScript,
                 tmpDir, userData, numExecutors, remoteAdmin, new UnixData(rootCommandPrefix, sshPort), jvmopts, stopOnTerminate,
                 subnetId, tags, idleTerminationMinutes, usePrivateDnsName, instanceCapStr, iamInstanceProfile,
                 useEphemeralDevices, false, launchTimeoutStr, false, null);
@@ -250,7 +250,7 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
     }
 
     public String getDisplayName() {
-        return description + " (" + ami + ")";
+        return description + " (" + amiName + ")";
     }
 
     String getZone() {
@@ -331,12 +331,18 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
         return labelSet;
     }
 
-    public String getAmi() {
-        return ami;
+    public String getAmiId() {
+    	// FIXME - figure out a way to ensure this is only called when absolutely necessary, at the moment
+    	// we are probably running more aws queries than is really necessary.
+    	return getAmiIdFromName(amiName);
     }
-
-    public void setAmi(String ami) {
-        this.ami = ami;
+    
+    public String getAmiName() {
+    	return amiName;
+    }
+    	 
+    public void setAmiName(String ami) {
+    	this.amiName = ami;
     }
 
     public int getInstanceCap() {
@@ -444,18 +450,20 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
         PrintStream logger = listener.getLogger();
         AmazonEC2 ec2 = getParent().connect();
 
+        String amiId = getAmiId();
+        
         try {
-            logProvisionInfo(logger, "Considering launching " + ami + " for template " + description);
+            logProvisionInfo(logger, "Considering launching " + amiId + " for template " + description);
 
             KeyPair keyPair = getKeyPair(ec2);
 
-            RunInstancesRequest riRequest = new RunInstancesRequest(ami, 1, 1);
+            RunInstancesRequest riRequest = new RunInstancesRequest(amiId, 1, 1);
             InstanceNetworkInterfaceSpecification net = new InstanceNetworkInterfaceSpecification();
 
             riRequest.setEbsOptimized(ebsOptimized);
 
             if (useEphemeralDevices) {
-                setupEphemeralDeviceMapping(riRequest);
+                setupEphemeralDeviceMapping(amiId, riRequest);
             } else {
                 setupCustomDeviceMapping(riRequest);
             }
@@ -469,7 +477,7 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
             }
             
             List<Filter> diFilters = new ArrayList<Filter>();
-            diFilters.add(new Filter("image-id").withValues(ami));
+            diFilters.add(new Filter("image-id").withValues(amiId));
 
             if (StringUtils.isNotBlank(getZone())) {
                 Placement placement = new Placement(getZone());
@@ -624,9 +632,8 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
         }
     }
 
-    private List<BlockDeviceMapping> getNewEphemeralDeviceMapping() {
-
-        final List<BlockDeviceMapping> oldDeviceMapping = getAmiBlockDeviceMappings();
+    private List<BlockDeviceMapping> getNewEphemeralDeviceMapping(String amiId) {
+        final List<BlockDeviceMapping> oldDeviceMapping = getAmiBlockDeviceMappings(amiId);
 
         final Set<String> occupiedDevices = new HashSet<String>();
         for (final BlockDeviceMapping mapping : oldDeviceMapping) {
@@ -655,28 +662,27 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
         return newDeviceMapping;
     }
 
-    private void setupEphemeralDeviceMapping(RunInstancesRequest riRequest) {
-        riRequest.withBlockDeviceMappings(getNewEphemeralDeviceMapping());
+    private void setupEphemeralDeviceMapping(String amiId, RunInstancesRequest riRequest) {
+        riRequest.withBlockDeviceMappings(getNewEphemeralDeviceMapping(amiId));
     }
 
-    private void setupEphemeralDeviceMapping(LaunchSpecification launchSpec) {
-        launchSpec.withBlockDeviceMappings(getNewEphemeralDeviceMapping());
+    private void setupEphemeralDeviceMapping(String amiId, LaunchSpecification launchSpec) {
+        launchSpec.withBlockDeviceMappings(getNewEphemeralDeviceMapping(amiId));
     }
 
-    private List<BlockDeviceMapping> getAmiBlockDeviceMappings() {
-
+    private List<BlockDeviceMapping> getAmiBlockDeviceMappings(String amiId) {
         /*
          * AmazonEC2#describeImageAttribute does not work due to a bug
          * https://forums.aws.amazon.com/message.jspa?messageID=231972
          */
-        DescribeImagesRequest request = new DescribeImagesRequest().withImageIds(ami);
+        DescribeImagesRequest request = new DescribeImagesRequest().withImageIds(amiId);
         for (final Image image : getParent().connect().describeImages(request).getImages()) {
-            if (ami.equals(image.getImageId())) {
+            if (amiId.equals(image.getImageId())) {
                 return image.getBlockDeviceMappings();
             }
         }
 
-        throw new AmazonClientException("Unable to get AMI device mapping for " + ami);
+        throw new AmazonClientException("Unable to get AMI device mapping for " + amiId);
     }
 
     private void setupCustomDeviceMapping(RunInstancesRequest riRequest) {
@@ -698,9 +704,11 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
         PrintStream logger = listener.getLogger();
         AmazonEC2 ec2 = getParent().connect();
 
+        String amiId = getAmiId();
+        
         try {
-            logger.println("Launching " + ami + " for template " + description);
-            LOGGER.info("Launching " + ami + " for template " + description);
+            logger.println("Launching " + amiId + " for template " + description);
+            LOGGER.info("Launching " + amiId + " for template " + description);
 
             KeyPair keyPair = getKeyPair(ec2);
 
@@ -719,7 +727,7 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
             LaunchSpecification launchSpecification = new LaunchSpecification();
             InstanceNetworkInterfaceSpecification net = new InstanceNetworkInterfaceSpecification();
 
-            launchSpecification.setImageId(ami);
+            launchSpecification.setImageId(amiId);
             launchSpecification.setInstanceType(type);
             launchSpecification.setEbsOptimized(ebsOptimized);
 
@@ -799,7 +807,7 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
             }
 
             if (useEphemeralDevices) {
-                setupEphemeralDeviceMapping(launchSpecification);
+                setupEphemeralDeviceMapping(amiId, launchSpecification);
             } else {
                 setupCustomDeviceMapping(launchSpecification);
             }
@@ -937,6 +945,16 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
         return ec2.describeSecurityGroups(groupReq);
     }
 
+    private String getAmiIdFromName(String ami) {
+    	if (ami != null && !ami.equals("") && !ami.startsWith("ami")) {
+    		DescribeImagesRequest request = new DescribeImagesRequest().withFilters(new Filter().withName("name").withValues(ami));
+    		for (final Image image : getParent().connect().describeImages(request).getImages()) {
+    			return image.getImageId();
+    		}
+    	}
+    	return ami;
+    }
+
     /**
      * Provisions a new EC2 slave based on the currently running instance on EC2, instead of starting a new one.
      */
@@ -1044,7 +1062,7 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
          */
         public FormValidation doValidateAmi(@QueryParameter boolean useInstanceProfileForCredentials,
                 @QueryParameter String credentialsId, @QueryParameter String ec2endpoint,
-                @QueryParameter String region, final @QueryParameter String ami) throws IOException {
+                @QueryParameter String region, final @QueryParameter String amiName) throws IOException {
             AWSCredentialsProvider credentialsProvider = EC2Cloud.createCredentialsProvider(useInstanceProfileForCredentials,
                     credentialsId);
             AmazonEC2 ec2;
@@ -1055,8 +1073,15 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
             }
             if (ec2 != null) {
                 try {
+                	if (!amiName.startsWith("ami")) {
+                    	DescribeImagesRequest request = new DescribeImagesRequest().withFilters(new Filter().withName("name").withValues(amiName));
+                    	for (final Image img : ec2.describeImages(request).getImages()) {
+                    		String ownerAlias = img.getImageOwnerAlias();
+                            return FormValidation.ok(img.getImageLocation() + (ownerAlias != null ? " by " + ownerAlias : ""));
+                    	}
+                    }
                     List<String> images = new LinkedList<String>();
-                    images.add(ami);
+                    images.add(amiName);
                     List<String> owners = new LinkedList<String>();
                     List<String> users = new LinkedList<String>();
                     DescribeImagesRequest request = new DescribeImagesRequest();
@@ -1068,7 +1093,7 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
                         // de-registered AMI causes an empty list to be
                         // returned. so be defensive
                         // against other possibilities
-                        return FormValidation.error("No such AMI, or not usable with this accessId: " + ami);
+                        return FormValidation.error("No such AMI, or not usable with this accessId: " + amiName);
                     }
                     String ownerAlias = img.get(0).getImageOwnerAlias();
                     return FormValidation.ok(img.get(0).getImageLocation() + (ownerAlias != null ? " by " + ownerAlias : ""));
