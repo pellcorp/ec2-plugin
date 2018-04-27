@@ -47,7 +47,7 @@ class SystemSSHClient implements SshClient {
 
         save(data, fullSrc, mode); //need to be able to remove these files
 
-        String sshClientLaunchString = String.format("scp -o StrictHostKeyChecking=no -p -i %s -P %d %s %s@%s:%s",
+        String sshClientLaunchString = String.format("scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p -i %s -P %d %s %s@%s:%s",
                 privateKeyFile.getAbsolutePath(), port,
                 fullSrc.getAbsolutePath(),
                 user, host, remoteTargetDirectory);
@@ -67,7 +67,7 @@ class SystemSSHClient implements SshClient {
     public void startCommandPipe(String command, EC2Computer computer, TaskListener listener)
             throws IOException, InterruptedException {
         // Obviously the master must have an installed ssh client.
-        String sshClientLaunchString = String.format("ssh -o StrictHostKeyChecking=no -i %s %s@%s -p %d %s",
+        String sshClientLaunchString = String.format("ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i %s %s@%s -p %d %s",
                 privateKeyFile.getAbsolutePath(), user, host, port, command);
 
         logger.info("[native ssh] Running " + sshClientLaunchString);
@@ -93,7 +93,7 @@ class SystemSSHClient implements SshClient {
 
     @Override
     public int run(String command, OutputStream output) throws IOException, InterruptedException {
-        String sshClientLaunchString = String.format("ssh -o StrictHostKeyChecking=no -i %s %s@%s -p %d %s",
+        String sshClientLaunchString = String.format("ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i %s %s@%s -p %d %s",
                 privateKeyFile.getAbsolutePath(), user, host, port, command);
 
         logger.info("[native ssh] Trying " + sshClientLaunchString);
