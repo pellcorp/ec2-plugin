@@ -255,10 +255,14 @@ public abstract class EC2Cloud extends Cloud {
         return useInstanceProfileForCredentials;
     }
 
+    public AWSCredentialsProvider getAWSCredentialsProvider() {
+    	return createCredentialsProvider();
+    }
+    
     public String getCredentialsId() {
         return credentialsId;
     }
-
+    
     public EC2PrivateKey getPrivateKey() {
         return privateKey;
     }
