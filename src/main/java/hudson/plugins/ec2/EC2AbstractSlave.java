@@ -136,6 +136,7 @@ public abstract class EC2AbstractSlave extends Slave {
         this.instanceId = instanceId;
         this.templateDescription = description;
         this.initScript = initScript;
+        
         this.tmpDir = tmpDir;
         this.remoteAdmin = remoteAdmin;
         this.jvmopts = jvmopts;
