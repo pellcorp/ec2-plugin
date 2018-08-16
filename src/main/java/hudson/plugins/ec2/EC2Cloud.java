@@ -259,6 +259,10 @@ public abstract class EC2Cloud extends Cloud {
     	return createCredentialsProvider();
     }
     
+    public String getCredentialsId() {
+        return credentialsId;
+    }
+    
     public EC2PrivateKey getPrivateKey() {
         return privateKey;
     }
