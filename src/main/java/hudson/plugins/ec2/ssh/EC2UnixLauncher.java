@@ -73,7 +73,7 @@ public class EC2UnixLauncher extends EC2ComputerLauncher {
     private static final Logger LOGGER = Logger.getLogger(EC2UnixLauncher.class.getName());
 
     private static final String BOOTSTRAP_AUTH_SLEEP_MS = "jenkins.ec2.bootstrapAuthSleepMs";
-    private static final String BOOTSTRAP_AUTH_TRIES= "jenkins.ec2.bootstrapAuthTries";
+    private static final String BOOTSTRAP_AUTH_TRIES = "jenkins.ec2.bootstrapAuthTries";
 
     private static int bootstrapAuthSleepMs = 30000;
     private static int bootstrapAuthTries = 30;
@@ -155,29 +155,18 @@ public class EC2UnixLauncher extends EC2ComputerLauncher {
                     && conn.exec("test -e ~/.hudson-run-init", logger) != 0) {
                 logInfo(computer, listener, "Executing init script");
                 scp.put(initScript.getBytes("UTF-8"), "init.sh", tmpDir, "0700");
-                Session sess = conn.openSession();
-                sess.requestDumbPTY(); // so that the remote side bundles stdout
-                                       // and stderr
-                sess.execCommand(buildUpCommand(computer, tmpDir + "/init.sh"));
-
-                sess.getStdin().close(); // nothing to write here
-                sess.getStderr().close(); // we are not supposed to get anything
-                                          // from stderr
-                IOUtils.copy(sess.getStdout(), logger);
-
-                int exitStatus = waitCompletion(sess);
+                
+                int exitStatus = conn.exec(buildUpCommand(computer, tmpDir + "/init.sh"), logger);
                 if (exitStatus != 0) {
-                    logWarning(computer, listener, "init script failed: exit code=" + exitStatus);
-                    return;
+                  logWarning(computer, listener, "init script failed: exit code=" + exitStatus);
+                  return;
                 }
-                sess.close();
-
-                // Needs a tty to run sudo.
-                sess = conn.openSession();
-                sess.requestDumbPTY(); // so that the remote side bundles stdout
-                                       // and stderr
-                sess.execCommand(buildUpCommand(computer, "touch ~/.hudson-run-init"));
-                sess.close();
+                
+                exitStatus = conn.exec(buildUpCommand(computer, "touch ~/.hudson-run-init"), logger);
+                if (exitStatus != 0) {
+                	logWarning(computer, listener, "touch ~/.hudson-run-init failed: exit code=" + exitStatus);
+                	return;
+                }
             }
 
             // TODO: parse the version number. maven-enforcer-plugin might help
@@ -382,18 +371,6 @@ public class EC2UnixLauncher extends EC2ComputerLauncher {
 
             return host;
         }
-    }
-
-    private int waitCompletion(Session session) throws InterruptedException {
-        // I noticed that the exit status delivery often gets delayed. Wait up
-        // to 1 sec.
-        for (int i = 0; i < 10; i++) {
-            Integer r = session.getExitStatus();
-            if (r != null)
-                return r;
-            Thread.sleep(100);
-        }
-        return -1;
     }
 
     @Override
