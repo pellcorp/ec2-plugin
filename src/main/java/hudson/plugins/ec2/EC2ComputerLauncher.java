@@ -73,7 +73,7 @@ public abstract class EC2ComputerLauncher extends ComputerLauncher {
                 Thread.sleep(10000);
             }
 
-            final String baseMsg = "Node " + computer.getName() + "(" + computer.getInstanceId() + ")";
+            final String baseMsg = getBaseMsg(computer);
             String msg;
 
             OUTER: while (true) {
@@ -150,6 +150,14 @@ public abstract class EC2ComputerLauncher extends ComputerLauncher {
             }
         }
 
+    }
+
+    private String getBaseMsg(EC2Computer computer) {
+        if (!computer.getName().contains(computer.getInstanceId())) {
+        	return "Node " + computer.getName() + "(" + computer.getInstanceId() + ")";
+        } else {
+        	return "Node " + computer.getName();
+        }
     }
 
     /**
