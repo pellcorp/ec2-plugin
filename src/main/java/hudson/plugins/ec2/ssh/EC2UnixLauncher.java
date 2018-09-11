@@ -124,6 +124,11 @@ public class EC2UnixLauncher extends EC2ComputerLauncher {
                                        // doesn't work that well.
         boolean successful = false;
         KeyPair key = computer.getCloud().getKeyPair();
+        
+        logInfo(computer, listener, "Getting keypair...");
+        logInfo(computer, listener, "Using key: " + key.getKeyName() + "\n" + key.getKeyFingerprint() + "\n"
+                + key.getKeyMaterial().substring(0, 160));
+        
         PrintStream logger = listener.getLogger();
         logInfo(computer, listener, "Launching instance: " + computer.getNode().getInstanceId());
 
@@ -190,7 +195,7 @@ public class EC2UnixLauncher extends EC2ComputerLauncher {
 
                 try {
                     // Obviously the master must have an installed ssh client.
-                    String sshClientLaunchString = String.format("ssh -o StrictHostKeyChecking=no -i %s %s@%s -p %d %s", identityKeyFile.getAbsolutePath(), node.remoteAdmin, getEC2HostAddress(computer, inst), node.getSshPort(), launchString);
+                    String sshClientLaunchString = String.format("ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i %s %s@%s -p %d %s", identityKeyFile.getAbsolutePath(), node.remoteAdmin, getEC2HostAddress(computer, inst), node.getSshPort(), launchString);
 
                     logInfo(computer, listener, "Launching slave agent (via SSH client process): " + sshClientLaunchString);
                     CommandLauncher commandLauncher = new CommandLauncher(sshClientLaunchString, null);
@@ -261,9 +266,7 @@ public class EC2UnixLauncher extends EC2ComputerLauncher {
         try {
             int tries = bootstrapAuthTries;
             boolean isAuthenticated = false;
-            logInfo(computer, listener, "Getting keypair...");
-            logInfo(computer, listener, "Using key: " + key.getKeyName() + "\n" + key.getKeyFingerprint() + "\n"
-                    + key.getKeyMaterial().substring(0, 160));
+            
             while (tries-- > 0) {
                 logInfo(computer, listener, "Authenticating as " + computer.getRemoteAdmin());
                 try {
