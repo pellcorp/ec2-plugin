@@ -135,7 +135,8 @@ public abstract class EC2AbstractSlave extends Slave {
 
         this.instanceId = instanceId;
         this.templateDescription = description;
-        this.initScript = initScript;
+        
+        this.initScript = StringUtils.replaceOnce(initScript, "$AWS_INSTANCE_ID", instanceId);
         
         this.tmpDir = tmpDir;
         this.remoteAdmin = remoteAdmin;
